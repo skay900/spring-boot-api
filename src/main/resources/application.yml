@@ -2,6 +2,8 @@ server:
   port: 9000
 
 spring:
+  application:
+    name: spring-boot-api
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/swagger_test
@@ -21,6 +23,16 @@ logging:
 
 springdoc:
   api-docs:
-    enabled: true
+    path: /api-docs
   swagger-ui:
     path: /swagger-ui
+
+allowed-domains:
+  domains:
+    - localhost:9000
+    - 127.0.0.1:9000
+
+jwt:
+  secretKey: spring-boot-api-dfkglndsflgknsdlkgnerlkgnerlkgnerlk
+
+
