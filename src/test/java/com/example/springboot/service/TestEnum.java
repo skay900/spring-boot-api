@@ -13,15 +13,15 @@ public enum TestEnum {
         this.name = name;
     }
 
-    public static TestEnum getName(String name) {
-        return Arrays.stream(values())
-                .filter(item -> item.name.equals(name))
-                .findFirst()
-                .orElse(TestEnum.THIRD);
-    }
-
-    public static void main(String[] args) {
-        System.out.println(TestEnum.getName("BBB"));
-    }
+//    public static com.example.springboot.app.service.TestEnum getName(String name) {
+//        return Arrays.stream(values())
+//                .filter(item -> item.name.equals(name))
+//                .findFirst()
+//                .orElse(com.example.springboot.app.service.TestEnum.THIRD);
+//    }
+//
+//    public static void main(String[] args) {
+//        System.out.println(com.example.springboot.app.service.TestEnum.getName("BBB"));
+//    }
 
 }

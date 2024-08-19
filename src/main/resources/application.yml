@@ -4,22 +4,11 @@ server:
 spring:
   application:
     name: spring-boot-api
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/swagger_test
-    username: postgres
-    password: 1234
-    type: com.zaxxer.hikari.HikariDataSource
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
 
 logging:
   level:
-    org:
-      springframework:
-        security: DEBUG
+    org.mybatis: DEBUG
+    org.apache.ibatis: DEBUG
 
 springdoc:
   api-docs:
@@ -31,6 +20,13 @@ allowed-domains:
   domains:
     - localhost:9000
     - 127.0.0.1:9000
+
+allowed-endpoints:
+  endpoints:
+    - /api-docs/**
+    - /swagger-ui/**
+    - /auth/accessToken
+    - /user/signIn
 
 jwt:
   secretKey: spring-boot-api-dfkglndsflgknsdlkgnerlkgnerlkgnerlk
