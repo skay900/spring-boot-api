@@ -1,4 +1,4 @@
-package com.example.springboot.properties;
+package com.example.springboot.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -18,4 +18,5 @@ public class AllowedDomainsProperties {
     public void setDomains(List<String> domains) {
         this.domains = domains;
     }
+
 }

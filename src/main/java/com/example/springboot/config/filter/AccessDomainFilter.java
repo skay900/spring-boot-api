@@ -1,6 +1,6 @@
-package com.example.springboot.filter;
+package com.example.springboot.config.filter;
 
-import com.example.springboot.properties.AllowedDomainsProperties;
+import com.example.springboot.config.properties.AllowedDomainsProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,10 +1,9 @@
 package com.example.springboot.config;
 
-import com.example.springboot.filter.AccessDomainFilter;
-import com.example.springboot.jwt.JwtFilter;
-import com.example.springboot.jwt.JwtAuthenticationEntryPoint;
-import com.example.springboot.jwt.JwtUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.springboot.config.filter.AccessDomainFilter;
+import com.example.springboot.config.jwt.JwtAuthenticationEntryPoint;
+import com.example.springboot.config.jwt.JwtFilter;
+import com.example.springboot.config.properties.AllowedEndpointsProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,21 +12,25 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final List<String> endpoint;
 
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final AccessDomainFilter accessDomainFilter;
     private final JwtFilter jwtFilter;
-    private final JwtUtils jwtUtils;
 
-    public SecurityConfig(JwtFilter jwtFilter, JwtUtils jwtUtils, AccessDomainFilter accessDomainFilter) {
+    public SecurityConfig(JwtFilter jwtFilter, AccessDomainFilter accessDomainFilter, AllowedEndpointsProperties allowedEndpointsProperties) {
         this.accessDomainFilter = accessDomainFilter;
         this.jwtFilter = jwtFilter;
-        this.jwtUtils = jwtUtils;
+        this.endpoint = allowedEndpointsProperties.getEndpoints().stream()
+                .map(endpoint -> endpoint.replaceAll("/$", ""))
+                .collect(Collectors.toList());
     }
 
     @Bean
@@ -36,7 +39,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api-docs/**", "/swagger-ui/**", "/auth/accessToken").permitAll()
+                        .requestMatchers(endpoint.toArray(new String[0])).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

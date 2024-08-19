@@ -1,4 +1,4 @@
-package com.example.springboot.jwt;
+package com.example.springboot.config.jwt;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

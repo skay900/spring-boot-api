@@ -1,4 +1,4 @@
-package com.example.springboot.jwt;
+package com.example.springboot.config.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -55,7 +55,7 @@ public class JwtUtils {
         claims.put("iat", new Date(System.currentTimeMillis()));
         claims.put("exp", new Date(System.currentTimeMillis() + expirationTime));
         claims.put("username", username);
-        claims.put("roles", "user");
+        claims.put("roles", "mappers/user");
         return claims;
     }
 

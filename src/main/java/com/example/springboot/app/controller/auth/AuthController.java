@@ -1,6 +1,6 @@
-package com.example.springboot.controller;
+package com.example.springboot.app.controller.auth;
 
-import com.example.springboot.jwt.JwtUtils;
+import com.example.springboot.config.jwt.JwtUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,7 +42,7 @@ public class AuthController {
                     content = @Content)
     })
     @GetMapping("/accessToken")
-    public ResponseEntity<Map<String, String>> getTokens(@Parameter(description = "토큰을 발급 받을 사용자 이름") @RequestParam String username) {
+    public ResponseEntity<Map<String, String>> getAccessToken(@Parameter(description = "토큰을 발급 받을 사용자 이름") @RequestParam String username) {
         String accessToken = jwtUtils.generateAccessToken(username);
         String refreshToken = jwtUtils.generateRefreshToken(username);
 
