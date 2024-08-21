@@ -1,9 +1,8 @@
 package com.example.springboot.exception.handler;
 
-import com.example.springboot.exception.ErrorResponse;
+import com.example.springboot.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,17 +14,19 @@ import org.springframework.web.context.request.WebRequest;
 public class RestControllerExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatusCode.valueOf(500), HttpStatus.INTERNAL_SERVER_ERROR
-                , "An unexpected error occurred: " + ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ApiResponse<Object> handleGlobalException(Exception ex) {
+        HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        return createErrorResponse(httpStatus, ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(AccessDeniedException ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatusCode.valueOf(403), HttpStatus.FORBIDDEN
-                , ex.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    public ApiResponse<Object> handleGlobalException(AccessDeniedException ex) {
+        HttpStatus httpStatus = HttpStatus.FORBIDDEN;
+        return createErrorResponse(httpStatus, ex.getMessage());
+    }
+
+    private ApiResponse<Object> createErrorResponse(HttpStatus httpStatus, String message) {
+        return ApiResponse.createError(httpStatus.value(), httpStatus.getReasonPhrase(), message);
     }
 
 }

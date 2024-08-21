@@ -55,7 +55,7 @@ public class JwtUtils {
         claims.put("iat", new Date(System.currentTimeMillis()));
         claims.put("exp", new Date(System.currentTimeMillis() + expirationTime));
         claims.put("username", username);
-        claims.put("roles", "mappers/user");
+        claims.put("roles", "USER");
         return claims;
     }
 

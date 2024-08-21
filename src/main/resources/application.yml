@@ -27,6 +27,7 @@ allowed-endpoints:
     - /swagger-ui/**
     - /auth/accessToken
     - /user/signIn
+    - /user/signUp
 
 jwt:
   secretKey: spring-boot-api-dfkglndsflgknsdlkgnerlkgnerlkgnerlk

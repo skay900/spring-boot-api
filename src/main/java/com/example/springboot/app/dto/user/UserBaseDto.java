@@ -11,13 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserBaseDto {
 
-    @Schema(description = "사용자 이메일(아이디)", example = "example@gmail.com")
+    @Schema(description = "사용자 이메일(아이디)", example = "test@example.com")
     private String email;
 
     @Schema(description = "사용자 비밀번호", example = "password1!")
     private String password;
 
-    @Schema(description = "사용자 이름", example = "유느님")
+    @Schema(description = "사용자 이름", example = "테스터")
     private String name;
 
     @Schema(description = "사용자 전화번호", example = "01012345678")

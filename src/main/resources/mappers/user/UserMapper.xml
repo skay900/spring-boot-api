@@ -3,11 +3,17 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.springboot.app.mapper.user.UserMapper">
 
+    <select id="insertUser" resultType="UserBaseDto" parameterType="UserBaseDto">
+        INSERT
+            INTO USER_BASE (EMAIL, PASSWORD, NAME, PHONE)
+            VALUES (#{email}, #{password}, #{name}, #{phone})
+        RETURNING EMAIL
+    </select>
+
     <select id="selectUser" resultType="UserBaseDto" parameterType="UserBaseDto">
         SELECT EMAIL, PASSWORD, NAME, PHONE
         FROM USER_BASE
         WHERE EMAIL = #{email}
-            AND PASSWORD = #{password}
     </select>
 
 </mapper>
