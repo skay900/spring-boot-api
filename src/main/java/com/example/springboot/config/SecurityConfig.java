@@ -4,6 +4,7 @@ import com.example.springboot.config.filter.AccessDomainFilter;
 import com.example.springboot.config.jwt.JwtAuthenticationEntryPoint;
 import com.example.springboot.config.jwt.JwtFilter;
 import com.example.springboot.config.properties.AllowedEndpointsProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,7 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,11 +26,12 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final List<String> endpoint;
-
+    @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
     private final AccessDomainFilter accessDomainFilter;
     private final JwtFilter jwtFilter;
+    private final List<String> endpoint;
 
     public SecurityConfig(JwtFilter jwtFilter, AccessDomainFilter accessDomainFilter, AllowedEndpointsProperties allowedEndpointsProperties) {
         this.accessDomainFilter = accessDomainFilter;
@@ -38,8 +44,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(endpoint.toArray(new String[0])).permitAll()
@@ -52,6 +58,19 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // accessToken 검증
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // 허용할 도메인
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE")); // 허용할 HTTP 메소드
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type")); // 허용할 요청 헤더
+        config.setAllowCredentials(true); // 자격 증명 허용 (예: 쿠키, 인증 정보)
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config); // 모든 경로에 대해 CORS 설정 적용
+        return source;
     }
 
     @Bean

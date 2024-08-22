@@ -19,13 +19,13 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/signUp")
-    public ApiResponse<Object> registration(@RequestBody UserBaseDto userBaseDto) {
-        return ApiResponse.createSuccess(userService.insertUser(userBaseDto));
+    public ApiResponse<Object> signUp(@RequestBody UserBaseDto userBaseDto) {
+        return ApiResponse.createSuccess(userService.signUp(userBaseDto));
     }
 
     @PostMapping("/signIn")
-    public ApiResponse<Object> login(@RequestBody UserBaseDto userBaseDto) {
-        return ApiResponse.createSuccess(userService.selectUser(userBaseDto));
+    public ApiResponse<Object> signIn(@RequestBody UserBaseDto userBaseDto) {
+        return ApiResponse.createSuccess(userService.signIn(userBaseDto));
     }
 
 }

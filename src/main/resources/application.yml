@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: spring-boot-api
+  messages:
+    encoding: UTF-8
+    basename: messages/error
 
 logging:
   level:
