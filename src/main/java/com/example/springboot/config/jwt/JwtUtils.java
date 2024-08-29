@@ -22,8 +22,8 @@ public class JwtUtils {
 
     private Key key;
 
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 3600000; // 1 hour in milliseconds
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 86400000; // 1 day in milliseconds
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 600000; // 10 minutes in milliseconds
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 43200000; // 12 hours in milliseconds
 
     @PostConstruct
     public void init() {

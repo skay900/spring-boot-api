@@ -55,4 +55,10 @@ public class UserService {
         return returnDto;
     }
 
+    public UserBaseDto selectUserInfo(UserBaseDto userBaseDto) {
+        userBaseDto = userMapper.selectUser(userBaseDto);
+        userBaseDto.setPassword(null);
+        return userBaseDto;
+    }
+
 }
