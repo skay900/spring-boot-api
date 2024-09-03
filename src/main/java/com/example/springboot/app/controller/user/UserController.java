@@ -15,17 +15,17 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/signUp")
+    @PostMapping("/sign-up")
     public ApiResponse<Object> signUp(@RequestBody UserBaseDto userBaseDto) {
         return ApiResponse.createSuccess(userService.signUp(userBaseDto));
     }
 
-    @PostMapping("/signIn")
+    @PostMapping("/sign-in")
     public ApiResponse<Object> signIn(@RequestBody UserBaseDto userBaseDto) {
         return ApiResponse.createSuccess(userService.signIn(userBaseDto));
     }
 
-    @GetMapping("/userInfo")
+    @GetMapping("/user-info")
     public ApiResponse<Object> selectUserInfo(@RequestParam String email) {
         UserBaseDto userBaseDto = new UserBaseDto();
         userBaseDto.setEmail(email);

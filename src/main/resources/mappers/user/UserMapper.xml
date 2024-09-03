@@ -7,7 +7,7 @@
         INSERT
             INTO USER_BASE (EMAIL, PASSWORD, NAME, PHONE)
             VALUES (#{email}, #{password}, #{name}, #{phone})
-        RETURNING EMAIL
+        RETURNING NAME
     </select>
 
     <select id="selectUser" resultType="UserBaseDto" parameterType="UserBaseDto">
