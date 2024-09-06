@@ -1,6 +1,12 @@
 package com.example.springboot.app.controller.auth;
 
+import com.example.springboot.app.dto.user.UserBaseDto;
+import com.example.springboot.app.service.user.UserService;
+import com.example.springboot.common.utils.HttpRequestUtil;
 import com.example.springboot.config.jwt.JwtUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -8,17 +14,26 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Tag(name = "권한 API", description = "권한 관련 API")
 @RestController
@@ -27,6 +42,27 @@ public class AuthController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private UserService userService;
+
+    @Value("${key.naver.client-id}")
+    private String CLIENT_ID;
+
+    @Value("${key.naver.client-secret}")
+    private String CLIENT_SECRET;
+
+    @Value("${auth.login.naver.redirection-uri}")
+    private String REDIRECT_URI;
+
+    @Value("${auth.login.naver.access-token-uri}")
+    private String ACCESS_TOKEN_URI;
+
+    @Value("${auth.login.naver.member-profile-uri}")
+    private String MEMBER_PROFILE_URI;
+
+    @Value("${front.login.redirection-uri}")
+    private String FRONT_REDIRECT_URI;
 
     @Operation(summary = "AccessToken 발행 API", description = "Name 입력 후 요청하면 AccessToken 이 발행됩니다.")
     @ApiResponses(value = {
@@ -42,7 +78,7 @@ public class AuthController {
                     content = @Content)
     })
     @GetMapping("/accessToken")
-    public ResponseEntity<Map<String, String>> getAccessToken(@Parameter(description = "토큰을 발급 받을 사용자 이름") @RequestParam String username) {
+    public com.example.springboot.common.dto.ApiResponse<Object> getAccessToken(@Parameter(description = "토큰을 발급 받을 사용자 이름") @RequestParam String username) {
         String accessToken = jwtUtils.generateAccessToken(username);
         String refreshToken = jwtUtils.generateRefreshToken(username);
 
@@ -50,7 +86,7 @@ public class AuthController {
         tokens.put("accessToken", accessToken);
         tokens.put("refreshAccessToken", refreshToken);
 
-        return new ResponseEntity<>(tokens, HttpStatus.OK);
+        return com.example.springboot.common.dto.ApiResponse.createSuccess(tokens);
     }
 
     @Operation(summary = "AccessToken Decode API", description = "발급 받은 AccessToken 입력 후 요청하면 AccessToken 이 Decode 됩니다.")
@@ -71,8 +107,84 @@ public class AuthController {
                     content = @Content)
     })
     @GetMapping("/decodeAccessToken")
-    public Map<String, Object> getDecodeAccessToken(@Parameter(description = "Decode 할 토큰") @RequestParam String accessToken) {
-        return jwtUtils.decodeAccessToken(accessToken);
+    public com.example.springboot.common.dto.ApiResponse<Object> getDecodeAccessToken(@Parameter(description = "Decode 할 토큰") @RequestParam String accessToken) {
+        return com.example.springboot.common.dto.ApiResponse.createSuccess(jwtUtils.decodeAccessToken(accessToken));
+    }
+
+    @GetMapping("/naver")
+    public ResponseEntity<Void> redirectToNaverLogin(HttpServletRequest request) {
+        String state = UUID.randomUUID().toString(); // CSRF 보호를 위한 state 값 생성
+
+        // 세션에 state 값 저장
+        HttpSession session = request.getSession();
+        session.setAttribute("oauthState", state);
+
+        String loginUrl = String.format(
+                "https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=%s&redirect_uri=%s&state=%s",
+                CLIENT_ID, REDIRECT_URI, state
+        );
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
+    }
+
+    @GetMapping("/naver/callback")
+    public ResponseEntity<Void> naverLoginCallback(@RequestParam String code, @RequestParam String state
+            , HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
+
+        // 세션에서 저장된 state 값을 가져옴
+        HttpSession session = request.getSession();
+        String storedState = (String) session.getAttribute("oauthState");
+
+        // 저장된 state와 네이버에서 받은 state 값이 일치하는지 확인
+        if (storedState == null || !storedState.equals(state)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // state 값이 일치하지 않으면 에러 처리
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 네이버 접근 토큰 발급
+        String accessTokenURI = String.format(
+                ACCESS_TOKEN_URI + "?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&state=%s",
+                CLIENT_ID, CLIENT_SECRET, code, state
+        );
+        String tokenResponse = HttpRequestUtil.get(accessTokenURI, null);
+        JsonNode tokenNode = objectMapper.readTree(tokenResponse);
+
+        // 네이버 회원 프로필 조회
+        String header = "Bearer " + tokenNode.get("access_token").asText();
+        Map<String, String> requestHeaders = new HashMap<>();
+        requestHeaders.put("Authorization", header);
+        String responseBody = HttpRequestUtil.get(MEMBER_PROFILE_URI, requestHeaders);
+        JsonNode memberNode = objectMapper.readTree(responseBody);
+
+        if ("00".equals(memberNode.get("resultcode").asText())) { // "00" 성공 코드
+            JsonNode respNode = memberNode.get("response");
+            String email = respNode.get("email").asText();
+
+            UserBaseDto userBaseDto = new UserBaseDto();
+            userBaseDto.setEmail(email);
+            userBaseDto.setName(respNode.get("name").asText());
+            userBaseDto.setPhone(respNode.get("mobile").asText());
+            userBaseDto.setSocial("NAVER");
+
+            // 이메일이 존재하지 않을 시 회원가입
+            if (ObjectUtils.isEmpty(userService.selectUserInfo(userBaseDto))) {
+                userService.signUp(userBaseDto);
+            }
+
+            // 로그인 엑세스 토큰 발급
+            String accessToken = jwtUtils.generateAccessToken(email);
+            
+            // 토큰 쿠키 저장
+            Cookie cookie = new Cookie("accessToken", accessToken);
+            cookie.setPath("/");  // 애플리케이션 전체 경로에서 접근 가능
+            cookie.setMaxAge(60 * 60);  // 쿠키 유효 시간 설정 (1시간)
+            response.addCookie(cookie);
+
+        } else {
+            throw new AccessDeniedException("네이버 로그인 실패");
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(FRONT_REDIRECT_URI)).build();
     }
 
 }

@@ -5,13 +5,33 @@
 
     <select id="insertUser" resultType="UserBaseDto" parameterType="UserBaseDto">
         INSERT
-            INTO USER_BASE (EMAIL, PASSWORD, NAME, PHONE)
-            VALUES (#{email}, #{password}, #{name}, #{phone})
+            INTO USER_BASE (
+                EMAIL
+                , NAME
+                , PHONE
+                <if test="password != null and password != ''">
+                    , PASSWORD
+                </if>
+                <if test="social != null and social != ''">
+                    , SOCIAL
+                </if>
+            )
+            VALUES (
+                #{email}
+                , #{name}
+                , #{phone}
+                <if test="password != null and password != ''">
+                    , #{password}
+                </if>
+                <if test="social != null and social != ''">
+                    , #{social}
+                </if>
+            )
         RETURNING NAME
     </select>
 
     <select id="selectUser" resultType="UserBaseDto" parameterType="UserBaseDto">
-        SELECT EMAIL, PASSWORD, NAME, PHONE
+        SELECT EMAIL, PASSWORD, NAME, PHONE, SOCIAL
         FROM USER_BASE
         WHERE EMAIL = #{email}
     </select>

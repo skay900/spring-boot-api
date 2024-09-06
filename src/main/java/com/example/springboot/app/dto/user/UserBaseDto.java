@@ -23,6 +23,9 @@ public class UserBaseDto {
     @Schema(description = "사용자 전화번호", example = "01012345678")
     private String phone;
 
+    @Schema(description = "소셜 로그인 타입", example = "NAVER")
+    private String social;
+
     @Schema(description = "Access Token", example = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiLsnKDripDri5giLCJyb2xlcyI6InVzZXIiLCJpc3MiOiJzcHJpbmctYm9vdC1hcGkiLCJleHAiOjE3MjQwMzI2NDgsImlhdCI6MTcyNDAyOTA0OCwidXNlcm5hbWUiOiLsnKDripDri5gifQ.U85k8tNPV4lT7GQkCJIuyYSGnOcxkF9XPjCcS9kxsI")
     private String accessToken;
 

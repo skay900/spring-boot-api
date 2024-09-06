@@ -6,9 +6,8 @@ import com.example.springboot.common.utils.MessageService;
 import com.example.springboot.config.jwt.JwtUtils;
 import com.example.springboot.exception.DuplicateEmailException;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,9 @@ public class UserService {
             throw new DuplicateEmailException(messageService.getMessage("error.user.duplicated.email"));
         }
 
-        userBaseDto.setPassword(passwordEncoder.encode(userBaseDto.getPassword()));
+        if (StringUtils.isNoneBlank(userBaseDto.getPassword())) {
+            userBaseDto.setPassword(passwordEncoder.encode(userBaseDto.getPassword()));
+        }
 
         return userMapper.insertUser(userBaseDto);
     }
@@ -57,7 +58,9 @@ public class UserService {
 
     public UserBaseDto selectUserInfo(UserBaseDto userBaseDto) {
         userBaseDto = userMapper.selectUser(userBaseDto);
-        userBaseDto.setPassword(null);
+        if (ObjectUtils.isNotEmpty(userBaseDto)) {
+            userBaseDto.setPassword(null);
+        }
         return userBaseDto;
     }
 
