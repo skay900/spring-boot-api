@@ -30,8 +30,13 @@ public class UserService {
 
     @Transactional
     public UserBaseDto signUp(UserBaseDto userBaseDto) {
-        if (ObjectUtils.isNotEmpty(userMapper.selectUser(userBaseDto))) {
-            throw new DuplicateEmailException(messageService.getMessage("error.user.duplicated.email"));
+        UserBaseDto dto = userMapper.selectUser(userBaseDto);
+        if (ObjectUtils.isNotEmpty(dto)) {
+            String msg = StringUtils.EMPTY;
+            if (StringUtils.isNotBlank(dto.getSocial())) {
+                msg = dto.getSocial() + " 로그인을 시도해주세요.";
+            }
+            throw new DuplicateEmailException(messageService.getMessage("error.user.duplicated.email") + msg);
         }
 
         if (StringUtils.isNoneBlank(userBaseDto.getPassword())) {
@@ -43,6 +48,11 @@ public class UserService {
 
     public UserBaseDto signIn(UserBaseDto userBaseDto) {
         UserBaseDto returnDto = userMapper.selectUser(userBaseDto);
+
+        if (returnDto != null && StringUtils.isBlank(returnDto.getPassword())
+                && StringUtils.isNotBlank(returnDto.getSocial())) {
+            throw new AccessDeniedException(returnDto.getSocial() + " 로그인을 시도해주세요.");
+        }
 
         if (returnDto == null || !passwordEncoder.matches(userBaseDto.getPassword(), returnDto.getPassword())) {
             throw new AccessDeniedException(messageService.getMessage("error.user.inconsistency.email.password"));
