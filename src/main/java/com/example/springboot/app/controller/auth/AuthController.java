@@ -200,4 +200,70 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
     }
 
+    @GetMapping("/google/callback")
+    public ResponseEntity<Void> googleLoginCallback(@RequestParam String code, @RequestParam String state
+            , HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
+
+        // 세션에서 저장된 state 값을 가져옴
+        HttpSession session = request.getSession();
+        String storedState = (String) session.getAttribute("oauthState");
+
+        // 저장된 state와 네이버에서 받은 state 값이 일치하는지 확인
+        if (storedState == null || !storedState.equals(state)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // state 값이 일치하지 않으면 에러 처리
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 구글 접근 토큰 발급
+        Map<String, Object> tokenBody = new HashMap<>() {{
+            put("code", code);
+            put("client_id", googleLogin.getClientId());
+            put("client_secret", googleLogin.getClientSecret());
+            put("redirect_uri", googleLogin.getRedirectUri());
+            put("grant_type", "authorization_code");
+        }};
+
+        String tokenResponse = HttpRequestUtil.post(googleLogin.getAccessTokenUri(), null, tokenBody);
+        JsonNode tokenNode = objectMapper.readTree(tokenResponse);
+
+        // 구글 회원 프로필 조회
+        String header = "Bearer " + tokenNode.get("access_token").asText();
+        Map<String, String> requestHeaders = new HashMap<>();
+        requestHeaders.put("Authorization", header);
+        String responseBody = HttpRequestUtil.get(googleLogin.getMemberProfileUri(), requestHeaders);
+        JsonNode memberNode = objectMapper.readTree(responseBody);
+
+        String email = memberNode.get("email").asText();
+
+        UserBaseDto userBaseDto = new UserBaseDto();
+        userBaseDto.setEmail(email);
+        userBaseDto.setName(memberNode.get("name").asText());
+        userBaseDto.setSocial("GOOGLE");
+
+        // 이메일이 존재하지 않을 시 회원가입
+        if (ObjectUtils.isEmpty(userService.selectUserInfo(userBaseDto))) {
+            userService.signUp(userBaseDto);
+        }
+
+        // 로그인 엑세스 토큰 발급
+        String accessToken = jwtUtils.generateAccessToken(email);
+
+        // 토큰 쿠키 생성
+        Cookie tokenCookie = new Cookie("accessToken", accessToken);
+        tokenCookie.setPath("/");  // 애플리케이션 전체 경로에서 접근 가능
+        tokenCookie.setMaxAge(60 * 60);  // 쿠키 유효 시간 설정 (1시간)
+
+        // email 쿠키 생성
+        Cookie emailCookie = new Cookie("email", email);
+        emailCookie.setPath("/");  // 애플리케이션 전체 경로에서 접근 가능
+        emailCookie.setMaxAge(60 * 60);  // 쿠키 유효 시간 설정 (1시간)
+
+        // 쿠키 저장
+        response.addCookie(tokenCookie);
+        response.addCookie(emailCookie);
+
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(FRONT_REDIRECT_URI)).build();
+    }
+
 }
