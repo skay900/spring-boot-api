@@ -112,10 +112,7 @@ public class AuthController {
         HttpSession session = request.getSession();
         session.setAttribute("oauthState", state);
 
-        String loginUrl = String.format(
-                naverLogin.getAuthorizationUri(), naverLogin.getClientId(), naverLogin.getRedirectUri(), state
-        );
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(naverLogin.getAuthorizationUri(state))).build();
     }
 
     @GetMapping("/naver/callback")
@@ -134,10 +131,7 @@ public class AuthController {
         ObjectMapper objectMapper = new ObjectMapper();
 
         // 네이버 접근 토큰 발급
-        String accessTokenURI = String.format(
-                naverLogin.getAccessTokenUri(), naverLogin.getClientId(), naverLogin.getClientSecret(), code, state
-        );
-        String tokenResponse = HttpRequestUtil.get(accessTokenURI, null);
+        String tokenResponse = HttpRequestUtil.get(naverLogin.getAccessTokenUri(code, state), null);
         JsonNode tokenNode = objectMapper.readTree(tokenResponse);
 
         // 네이버 회원 프로필 조회
@@ -194,10 +188,7 @@ public class AuthController {
         HttpSession session = request.getSession();
         session.setAttribute("oauthState", state);
 
-        String loginUrl = String.format(
-                googleLogin.getAuthorizationUri(), googleLogin.getClientId(), googleLogin.getRedirectUri(), state
-        );
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(googleLogin.getAuthorizationUri(state))).build();
     }
 
     @GetMapping("/google/callback")
@@ -208,7 +199,7 @@ public class AuthController {
         HttpSession session = request.getSession();
         String storedState = (String) session.getAttribute("oauthState");
 
-        // 저장된 state와 네이버에서 받은 state 값이 일치하는지 확인
+        // 저장된 state와 구글에서 받은 state 값이 일치하는지 확인
         if (storedState == null || !storedState.equals(state)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // state 값이 일치하지 않으면 에러 처리
         }

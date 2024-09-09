@@ -26,4 +26,12 @@ public class NaverLoginProperties {
     @Value("${auth.login.naver.member-profile-uri}")
     private String memberProfileUri;
 
+    public String getAuthorizationUri(String state) {
+        return String.format(this.authorizationUri, this.clientId, this.redirectUri, state);
+    }
+
+    public String getAccessTokenUri(String code, String state) {
+        return String.format(this.accessTokenUri, this.clientId, this.clientSecret, code, state);
+    }
+
 }

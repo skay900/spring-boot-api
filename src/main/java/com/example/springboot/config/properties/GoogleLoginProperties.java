@@ -26,4 +26,8 @@ public class GoogleLoginProperties {
     @Value("${auth.login.google.member-profile-uri}")
     private String memberProfileUri;
 
+    public String getAuthorizationUri(String state) {
+        return String.format(this.authorizationUri, this.clientId, this.redirectUri, state);
+    }
+
 }
