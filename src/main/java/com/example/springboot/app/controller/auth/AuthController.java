@@ -4,6 +4,8 @@ import com.example.springboot.app.dto.user.UserBaseDto;
 import com.example.springboot.app.service.user.UserService;
 import com.example.springboot.common.utils.HttpRequestUtil;
 import com.example.springboot.config.jwt.JwtUtils;
+import com.example.springboot.config.properties.GoogleLoginProperties;
+import com.example.springboot.config.properties.NaverLoginProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,20 +48,11 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    @Value("${key.naver.client-id}")
-    private String CLIENT_ID;
+    @Autowired
+    private NaverLoginProperties naverLogin;
 
-    @Value("${key.naver.client-secret}")
-    private String CLIENT_SECRET;
-
-    @Value("${auth.login.naver.redirection-uri}")
-    private String REDIRECT_URI;
-
-    @Value("${auth.login.naver.access-token-uri}")
-    private String ACCESS_TOKEN_URI;
-
-    @Value("${auth.login.naver.member-profile-uri}")
-    private String MEMBER_PROFILE_URI;
+    @Autowired
+    private GoogleLoginProperties googleLogin;
 
     @Value("${front.login.redirection-uri}")
     private String FRONT_REDIRECT_URI;
@@ -120,8 +113,7 @@ public class AuthController {
         session.setAttribute("oauthState", state);
 
         String loginUrl = String.format(
-                "https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=%s&redirect_uri=%s&state=%s",
-                CLIENT_ID, REDIRECT_URI, state
+                naverLogin.getAuthorizationUri(), naverLogin.getClientId(), naverLogin.getRedirectUri(), state
         );
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
     }
@@ -143,8 +135,7 @@ public class AuthController {
 
         // 네이버 접근 토큰 발급
         String accessTokenURI = String.format(
-                ACCESS_TOKEN_URI + "?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&state=%s",
-                CLIENT_ID, CLIENT_SECRET, code, state
+                naverLogin.getAccessTokenUri(), naverLogin.getClientId(), naverLogin.getClientSecret(), code, state
         );
         String tokenResponse = HttpRequestUtil.get(accessTokenURI, null);
         JsonNode tokenNode = objectMapper.readTree(tokenResponse);
@@ -153,7 +144,7 @@ public class AuthController {
         String header = "Bearer " + tokenNode.get("access_token").asText();
         Map<String, String> requestHeaders = new HashMap<>();
         requestHeaders.put("Authorization", header);
-        String responseBody = HttpRequestUtil.get(MEMBER_PROFILE_URI, requestHeaders);
+        String responseBody = HttpRequestUtil.get(naverLogin.getMemberProfileUri(), requestHeaders);
         JsonNode memberNode = objectMapper.readTree(responseBody);
 
         if ("00".equals(memberNode.get("resultcode").asText())) { // "00" 성공 코드
@@ -174,17 +165,39 @@ public class AuthController {
             // 로그인 엑세스 토큰 발급
             String accessToken = jwtUtils.generateAccessToken(email);
             
-            // 토큰 쿠키 저장
-            Cookie cookie = new Cookie("accessToken", accessToken);
-            cookie.setPath("/");  // 애플리케이션 전체 경로에서 접근 가능
-            cookie.setMaxAge(60 * 60);  // 쿠키 유효 시간 설정 (1시간)
-            response.addCookie(cookie);
+            // 토큰 쿠키 생성
+            Cookie tokenCookie = new Cookie("accessToken", accessToken);
+            tokenCookie.setPath("/");  // 애플리케이션 전체 경로에서 접근 가능
+            tokenCookie.setMaxAge(60 * 60);  // 쿠키 유효 시간 설정 (1시간)
+
+            // email 쿠키 생성
+            Cookie emailCookie = new Cookie("email", email);
+            emailCookie.setPath("/");  // 애플리케이션 전체 경로에서 접근 가능
+            emailCookie.setMaxAge(60 * 60);  // 쿠키 유효 시간 설정 (1시간)
+
+            // 쿠키 저장
+            response.addCookie(tokenCookie);
+            response.addCookie(emailCookie);
 
         } else {
             throw new AccessDeniedException("네이버 로그인 실패");
         }
 
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(FRONT_REDIRECT_URI)).build();
+    }
+
+    @GetMapping("/google")
+    public ResponseEntity<Void> redirectToGoogleLogin(HttpServletRequest request) {
+        String state = UUID.randomUUID().toString(); // CSRF 보호를 위한 state 값 생성
+
+        // 세션에 state 값 저장
+        HttpSession session = request.getSession();
+        session.setAttribute("oauthState", state);
+
+        String loginUrl = String.format(
+                googleLogin.getAuthorizationUri(), googleLogin.getClientId(), googleLogin.getRedirectUri(), state
+        );
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
     }
 
 }

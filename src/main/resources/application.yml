@@ -44,8 +44,14 @@ front:
 auth:
   login:
     naver:
+      authorization-uri: https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=%s&redirect_uri=%s&state=%s
       redirection-uri: http://localhost:9000/auth/naver/callback
-      access-token-uri: https://nid.naver.com/oauth2.0/token
+      access-token-uri: https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&state=%s
       member-profile-uri: https://openapi.naver.com/v1/nid/me
+    google:
+      authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?scope=profile&response_type=token&state=%s&redirect_uri=%s&client_id=%s
+      redirection-uri: http://localhost:9000/auth/google/callback
+      access-token-uri:
+      member-profile-uri:
 
 
